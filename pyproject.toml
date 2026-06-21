@@ -1,0 +1,63 @@
+[project]
+name = "rpggeek-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Erik Saltwell", email = "erik.saltwell@gmail.com" },
+]
+requires-python = ">=3.11"
+dependencies = [
+    "jinja2>=3.1.0",
+    "pydantic>=2.13.3",
+    "python-dotenv>=1.2.1",
+    "rich>=14.2.0",
+    "structlog>=25.5.0",
+    "typer>=0.21.1",
+]
+
+[project.scripts]
+rpggeek-mcp = "rpggeek_mcp.console:main.app"
+
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pyright>=1.1.0",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "ssort>=0.16.0",
+    "ty>=0.0.1a5",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = "-q -s"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty.environment]
+# src/ layout — tell ty where first-party code lives
+root = ["src"]
+python-version = "3.11"
+
+[tool.ty.rules]
+# Reasonable signal without going full-strict
+possibly-unresolved-reference = "warn"
+unresolved-attribute = "warn"
+unused-ignore-comment = "warn"
+redundant-cast = "warn"
