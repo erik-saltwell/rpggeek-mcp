@@ -4,15 +4,14 @@ import asyncio
 import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import httpx
 import structlog
-from dotenv import load_dotenv
 
+from ..utils import load_dotenv_from
 from .models import Candidate, ProductDetails
 
-load_dotenv(Path(__file__).parents[3] / ".env")
+load_dotenv_from(__file__)
 
 _log = structlog.get_logger(__name__)
 

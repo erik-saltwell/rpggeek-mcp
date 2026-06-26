@@ -6,12 +6,11 @@ from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 
 import typer
-from dotenv import load_dotenv
 from rich.console import Console
 
 from ..mcp.rpggeek_client import RpgGeekClient
 from ..protocols import CompositeLogger, LoggingProtocol
-from ..utils import Tracer, common_paths, initialize_request, initialize_tracing
+from ..utils import Tracer, common_paths, initialize_request, initialize_tracing, load_dotenv_from
 from .file_logging_protocol import FileLogger
 from .rich_logging_protocol import RichConsoleLogger
 
@@ -52,7 +51,6 @@ def find_candidates(
     isbn: str | None = typer.Option(None, "--isbn", help="ISBN to search for"),
 ) -> None:
     """Search RPGGeek for products matching a name and/or ISBN."""
-    load_dotenv()
     client = RpgGeekClient()
     results = asyncio.run(client.find_candidates(name=name, isbn=isbn))
     print(json.dumps([r.model_dump() for r in results], indent=2))
@@ -63,7 +61,6 @@ def get_details(
     rpggeek_id: int = typer.Argument(help="Numeric RPGGeek product ID"),
 ) -> None:
     """Fetch full product details for an RPGGeek item by ID."""
-    load_dotenv()
     client = RpgGeekClient()
     result = asyncio.run(client.get_product_details(rpggeek_id))
     print(json.dumps(result.model_dump(), indent=2))
@@ -72,8 +69,6 @@ def get_details(
 @app.command("test")
 def test() -> None:
     """Simple smoke command."""
-    load_dotenv()
-    load_dotenv()
     client = RpgGeekClient()
     results = asyncio.run(client.find_candidates(name="alice is missing", isbn=None))
     print(json.dumps([r.model_dump() for r in results], indent=2))
@@ -119,7 +114,7 @@ def _callback(
 ) -> None:
     """Root command group for reddit_rpg_miner."""
     # Intentionally empty: this forces Typer to keep subcommands like `test`.
-    load_dotenv()
+    load_dotenv_from(__file__)
 
 
 if __name__ == "__main__":
