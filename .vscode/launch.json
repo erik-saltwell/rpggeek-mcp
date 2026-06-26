@@ -13,6 +13,30 @@
             "args": "test"
         },
         {
+            "name": "find-candidates --name",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "rpggeek_mcp",
+            "console": "integratedTerminal",
+            "args": ["find-candidates", "--name", "Masks of Nyarlathotep"]
+        },
+        {
+            "name": "find-candidates --isbn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "rpggeek_mcp",
+            "console": "integratedTerminal",
+            "args": ["find-candidates", "--isbn", "1568820283"]
+        },
+        {
+            "name": "get-details",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "rpggeek_mcp",
+            "console": "integratedTerminal",
+            "args": ["get-details", "12345"]
+        },
+        {
             "name": "custom args",
             "type": "debugpy",
             "request": "launch",

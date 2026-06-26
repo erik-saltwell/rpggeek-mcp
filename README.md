@@ -1,128 +1,149 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
-<a id="readme-top"></a>
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-  <a href="https://github.com/github_username/repo_name">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
+# rpggeek-mcp
 
-<h3 align="center">RPGGeek MCP</h3>
+An MCP (Model Context Protocol) server for querying [RPGGeek](https://rpggeek.com) — the RPG section of the BoardGameGeek network. Connect it to Claude Desktop (or any MCP client) to let an AI assistant look up RPG products by name or ISBN and retrieve detailed product information.
 
-  <p align="center">
-    Unofficial community MCP server for RPGGeek product search and metadata lookup. Not affiliated with or endorsed by RPGGeek.
-    <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
-    &middot;
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    &middot;
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
-  </p>
-</div>
+> Unofficial community project. Not affiliated with or endorsed by RPGGeek.
 
+## Tools
 
+### `find_candidates`
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
+Searches RPGGeek for products matching a name and/or ISBN. Returns up to 5 candidates.
 
+**Parameters** (at least one required):
 
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Product name to search for |
+| `isbn` | `string` | ISBN (any format) |
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+**Strategy:** if an ISBN is provided it is tried first; the name is used as a fallback if the ISBN search returns no results.
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+**Returns:** a list of up to 5 candidates, each with:
+- `rpggeek_id` — RPGGeek's numeric item ID
+- `name` — primary product name
+- `year_published` — publication year, or `null`
 
-Here's a blank template to get started. To avoid retyping too much info, do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`, `project_license`
+An empty list means nothing was found. Pass `rpggeek_id` from a candidate to `get_product_details` to retrieve full data.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+---
 
+### `get_product_details`
 
+Returns full structured data for a known RPGGeek item.
 
-<!-- GETTING STARTED -->
-## Getting Started
+**Parameters:**
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `rpggeek_id` | `integer` | RPGGeek's numeric item ID |
 
-### Prerequisites
+**Returns:**
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+| Field | Type | Description |
+|-------|------|-------------|
+| `rpggeek_id` | `integer` | |
+| `name` | `string` | Primary product name |
+| `year_published` | `integer \| null` | |
+| `description` | `string \| null` | Full product description |
+| `systems` | `string[]` | RPG systems (e.g. `"Dungeons & Dragons 5E"`) |
+| `categories` | `string[]` | Product categories (e.g. `"Core Rulebook"`, `"Adventure/Scenario"`) |
+| `designers` | `string[]` | Designer names |
+| `publishers` | `string[]` | Publisher names |
+| `thumbnail_url` | `string \| null` | Cover thumbnail URL |
+| `rating` | `number \| null` | Average community rating |
 
-### Installation
+---
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/github_username/repo_name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
-5. Change git remote url to avoid accidental pushes to base project
-   ```sh
-   git remote set-url origin github_username/repo_name
-   git remote -v # confirm the changes
-   ```
+## Requirements
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- [uv](https://docs.astral.sh/uv/) must be installed. Python is managed automatically by uv.
+- A free [RPGGeek account](https://rpggeek.com/login) — the XML API requires authentication.
 
+## Installation
 
+**1. Create a `.env` file** in the directory where you'll run the server (or set the variables in your shell / Claude Desktop config):
 
-<!-- USAGE EXAMPLES -->
-## Usage
+```bash
+cp .env.example .env
+# then edit .env and fill in your RPGGeek username and password
+```
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+**2. Run the server** — no cloning or venv management required with `uvx`:
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+```bash
+uvx rpggeek-mcp serve
+```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+To install permanently as a tool:
 
+```bash
+uv tool install rpggeek-mcp
+rpggeek-mcp serve
+```
 
+## Connecting to Claude Desktop
 
+Add the server to your Claude Desktop configuration file:
 
-<!-- LICENSE -->
-## License
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-Distributed under the project_license. See `LICENSE.txt` for more information.
+```json
+{
+  "mcpServers": {
+    "rpggeek": {
+      "command": "uvx",
+      "args": ["rpggeek-mcp", "serve"],
+      "env": {
+        "RPGGEEK_USERNAME": "your_rpggeek_username",
+        "RPGGEEK_PASSWORD": "your_rpggeek_password"
+      }
+    }
+  }
+}
+```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Restart Claude Desktop after saving. The RPGGeek tools will appear in the tool picker.
 
+## Usage example
 
+Once connected, you can ask Claude things like:
 
-<!-- CONTACT -->
-## Contact
+> "Find the RPGGeek entry for Dungeon Crawl Classics"
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
+Claude will call `find_candidates` to get a list of matches, then `get_product_details` on the best one to pull full metadata.
 
-Project Link: [https://github.com/github_username/repo_name](https://github.com/github_username/repo_name)
+## Running the server manually
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+```bash
+uv run rpggeek-mcp serve
+```
+
+The server speaks the MCP protocol over stdio and is designed to be launched by an MCP client rather than run interactively. Logs are written to `logs/rpggeek_mcp.log`.
+
+## Development
+
+**Run tests:**
+
+```bash
+uv run pytest
+```
+
+**Type-check:**
+
+```bash
+uv run pyright
+```
+
+**Lint and format:**
+
+```bash
+uv run ruff check .
+uv run ruff format .
+```
+
+## Notes
+
+- Uses the [RPGGeek XML API 2](https://rpggeek.com/wiki/page/XML_API2). A free RPGGeek account is required; credentials are read from `RPGGEEK_USERNAME` and `RPGGEEK_PASSWORD`.
+- Requests are rate-limited to 1 per second to respect the API's usage guidelines.

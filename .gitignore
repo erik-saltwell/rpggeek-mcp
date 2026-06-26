@@ -230,3 +230,6 @@ __marimo__/
 # Keep data directory scaffolding, ignore generated data files
 /data/
 !/data/.gitkeep
+
+# Runtime logs
+/logs/

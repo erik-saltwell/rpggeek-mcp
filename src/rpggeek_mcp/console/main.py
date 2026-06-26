@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import json
 from importlib.metadata import PackageNotFoundError, metadata
 from importlib.metadata import version as dist_version
 
@@ -8,11 +10,11 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from ..commands.test_command import TestCommand
+from ..mcp.rpggeek_client import RpgGeekClient
 from ..protocols import CommandProtocol, CompositeLogger, LoggingProtocol
 from ..utils import Tracer, common_paths, initialize_request, initialize_tracing
 from .file_logging_protocol import FileLogger
 from .rich_logging_protocol import RichConsoleLogger
-
 
 app = typer.Typer(
     name="rpggeek-mcp",
@@ -32,6 +34,40 @@ def create_logger() -> tuple[LoggingProtocol, Tracer]:
     logger = CompositeLogger([console_logger, file_logger])
     logger.report_message(f"[blue]Session id: {request_id}[/blue]")
     return logger, Tracer()
+
+
+@app.command("serve")
+def serve() -> None:
+    """Start the RPGGeek MCP server (stdio transport)."""
+    from ..mcp.server import mcp as _mcp
+
+    _, tracer = create_logger()
+    tracer.add_context("transport", "stdio")
+    tracer.log("mcp_server_start")
+    _mcp.run(transport="stdio")
+
+
+@app.command("find-candidates")
+def find_candidates(
+    name: str | None = typer.Option(None, "--name", "-n", help="Product name to search for"),
+    isbn: str | None = typer.Option(None, "--isbn", help="ISBN to search for"),
+) -> None:
+    """Search RPGGeek for products matching a name and/or ISBN."""
+    load_dotenv()
+    client = RpgGeekClient()
+    results = asyncio.run(client.find_candidates(name=name, isbn=isbn))
+    print(json.dumps([r.model_dump() for r in results], indent=2))
+
+
+@app.command("get-details")
+def get_details(
+    rpggeek_id: int = typer.Argument(help="Numeric RPGGeek product ID"),
+) -> None:
+    """Fetch full product details for an RPGGeek item by ID."""
+    load_dotenv()
+    client = RpgGeekClient()
+    result = asyncio.run(client.get_product_details(rpggeek_id))
+    print(json.dumps(result.model_dump(), indent=2))
 
 
 @app.command("test")
