@@ -9,9 +9,8 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from ..commands.test_command import TestCommand
 from ..mcp.rpggeek_client import RpgGeekClient
-from ..protocols import CommandProtocol, CompositeLogger, LoggingProtocol
+from ..protocols import CompositeLogger, LoggingProtocol
 from ..utils import Tracer, common_paths, initialize_request, initialize_tracing
 from .file_logging_protocol import FileLogger
 from .rich_logging_protocol import RichConsoleLogger
@@ -73,9 +72,11 @@ def get_details(
 @app.command("test")
 def test() -> None:
     """Simple smoke command."""
-    logger, tracer = create_logger()
-    command: CommandProtocol = TestCommand(logger=logger, tracer=tracer)
-    command.execute()
+    load_dotenv()
+    load_dotenv()
+    client = RpgGeekClient()
+    results = asyncio.run(client.find_candidates(name="alice is missing", isbn=None))
+    print(json.dumps([r.model_dump() for r in results], indent=2))
 
 
 def _version_callback(value: bool) -> None:

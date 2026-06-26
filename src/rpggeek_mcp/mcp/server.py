@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from dotenv import load_dotenv
 from fastmcp import FastMCP
 
-# Resolve .env relative to this file so it's found regardless of CWD
-load_dotenv(Path(__file__).parents[3] / ".env")
-
-from .models import Candidate, ProductDetails  # noqa: E402
-from .rpggeek_client import RpgGeekClient  # noqa: E402
+from .models import Candidate, ProductDetails
+from .rpggeek_client import RpgGeekClient
 
 mcp: FastMCP = FastMCP("rpggeek")
 

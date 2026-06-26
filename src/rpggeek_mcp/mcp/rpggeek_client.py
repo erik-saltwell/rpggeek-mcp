@@ -4,46 +4,34 @@ import asyncio
 import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import httpx
 import structlog
+from dotenv import load_dotenv
 
 from .models import Candidate, ProductDetails
+
+load_dotenv(Path(__file__).parents[3] / ".env")
 
 _log = structlog.get_logger(__name__)
 
 _BASE_URL = "https://rpggeek.com/xmlapi2"
-_LOGIN_URL = "https://rpggeek.com/login/api/v1"
 
 
 @dataclass
 class RpgGeekClient:
     rate_limit_delay: float = field(default=1.0)
-    _http: httpx.AsyncClient = field(default_factory=httpx.AsyncClient, init=False, repr=False)
-    _authenticated: bool = field(default=False, init=False, repr=False)
+    _http: httpx.AsyncClient = field(init=False, repr=False)
 
-    async def _ensure_authenticated(self) -> None:
-        if self._authenticated:
-            return
-        self._authenticated = True
-        username = os.environ.get("RPGGEEK_USERNAME")
-        password = os.environ.get("RPGGEEK_PASSWORD")
-        if not username or not password:
-            _log.warning("rpggeek_auth_skipped", reason="missing credentials")
-            return
-        _log.info("rpggeek_auth_attempt", username=username)
-        try:
-            response = await self._http.post(
-                _LOGIN_URL,
-                json={"credentials": {"username": username, "password": password}},
-            )
-            response.raise_for_status()
-            _log.info("rpggeek_auth_success", username=username)
-        except Exception as exc:
-            _log.warning("rpggeek_auth_failed", username=username, error=str(exc))
+    def __post_init__(self) -> None:
+        token = os.environ.get("RPGGEEK_BEARER_TOKEN", "")
+        if not token:
+            _log.warning("rpggeek_bearer_token_missing", reason="RPGGEEK_BEARER_TOKEN not set")
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        self._http = httpx.AsyncClient(headers=headers)
 
     async def _search(self, query: str) -> list[Candidate]:
-        await self._ensure_authenticated()
         await asyncio.sleep(self.rate_limit_delay)
         response = await self._http.get(
             f"{_BASE_URL}/search",
@@ -64,7 +52,6 @@ class RpgGeekClient:
                 )
             )
         return candidates
-        # Auth is best-effort; the XML API works without it for public data
 
     async def find_candidates(self, name: str | None, isbn: str | None) -> list[Candidate]:
         if name is None and isbn is None:
@@ -81,7 +68,6 @@ class RpgGeekClient:
         return []
 
     async def get_product_details(self, rpggeek_id: int) -> ProductDetails:
-        await self._ensure_authenticated()
         await asyncio.sleep(self.rate_limit_delay)
         response = await self._http.get(
             f"{_BASE_URL}/thing",
