@@ -8,7 +8,7 @@ An MCP (Model Context Protocol) server for querying [RPGGeek](https://rpggeek.co
 
 ### `find_candidates`
 
-Searches RPGGeek for products matching a name and/or ISBN. Returns up to 5 candidates.
+Searches RPGGeek for RPG products matching a name and/or ISBN. Returns up to 5 candidates.
 
 **Parameters** (at least one required):
 
@@ -20,11 +20,11 @@ Searches RPGGeek for products matching a name and/or ISBN. Returns up to 5 candi
 **Strategy:** if an ISBN is provided it is tried first; the name is used as a fallback if the ISBN search returns no results.
 
 **Returns:** a list of up to 5 candidates, each with:
-- `rpggeek_id` — RPGGeek's numeric item ID
+- `rpggeek_id` — RPGGeek's numeric item ID (shared with BoardGameGeek and VideoGameGeek)
 - `name` — primary product name
 - `year_published` — publication year, or `null`
 
-An empty list means nothing was found. Pass `rpggeek_id` from a candidate to `get_product_details` to retrieve full data.
+Results are scoped to RPG items only. An empty list means nothing was found. Pass `rpggeek_id` from a candidate to `get_product_details` to retrieve full data.
 
 ---
 
@@ -58,15 +58,19 @@ Returns full structured data for a known RPGGeek item.
 ## Requirements
 
 - [uv](https://docs.astral.sh/uv/) must be installed. Python is managed automatically by uv.
-- A free [RPGGeek account](https://rpggeek.com/login) — the XML API requires authentication.
+- A bearer token for the RPGGeek XML API. Obtain one by logging in to your BGG/RPGGeek account and submitting an application at [boardgamegeek.com/applications/create](https://boardgamegeek.com/applications/create).
 
 ## Installation
 
-**1. Create a `.env` file** in the directory where you'll run the server (or set the variables in your shell / Claude Desktop config):
+**1. Create a `.env` file** in the repo root (or any ancestor directory of where the server is installed):
 
 ```bash
 cp .env.example .env
-# then edit .env and fill in your RPGGeek username and password
+# then edit .env and set your bearer token
+```
+
+```env
+RPGGEEK_BEARER_TOKEN=your_bearer_token_here
 ```
 
 **2. Run the server** — no cloning or venv management required with `uvx`:
@@ -96,8 +100,7 @@ Add the server to your Claude Desktop configuration file:
       "command": "uvx",
       "args": ["rpggeek-mcp", "serve"],
       "env": {
-        "RPGGEEK_USERNAME": "your_rpggeek_username",
-        "RPGGEEK_PASSWORD": "your_rpggeek_password"
+        "RPGGEEK_BEARER_TOKEN": "your_bearer_token_here"
       }
     }
   }
@@ -133,7 +136,7 @@ uv run pytest
 **Type-check:**
 
 ```bash
-uv run pyright
+uv run ty check
 ```
 
 **Lint and format:**
@@ -145,5 +148,5 @@ uv run ruff format .
 
 ## Notes
 
-- Uses the [RPGGeek XML API 2](https://rpggeek.com/wiki/page/XML_API2). A free RPGGeek account is required; credentials are read from `RPGGEEK_USERNAME` and `RPGGEEK_PASSWORD`.
+- Uses the [RPGGeek XML API 2](https://rpggeek.com/wiki/page/XML_API2). A bearer token is required; see [Requirements](#requirements) above.
 - Requests are rate-limited to 1 per second to respect the API's usage guidelines.
